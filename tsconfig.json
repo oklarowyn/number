@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+      "types": ["@types/node"],
+      "moduleResolution": "node",
+      "module": "commonjs",
+      "target": "ESNext", 
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "outDir": "./dist",
+      "declaration": true,
+      "allowJs": true
+    },
+    "exclude": [
+      "./index.test.ts",
+      "./jest.config.js"
+    ]
+  }
