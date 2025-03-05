@@ -8,4 +8,4 @@ export type LanguageData = {
   minus: string;
 };
 
-export type AvalaibleLanguage = 'en' | 'fr' | 'de' | 'es' | 'it' | 'jp' | 'zh' | 'ar' | 'ru'
+export type AvalaibleLanguage = 'en' | 'fr' | 'fr-BE' | 'de' | 'es' | 'it' | 'jp' | 'zh' | 'ar' | 'ru'

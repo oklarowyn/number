@@ -97,6 +97,7 @@ locale(
 
 - English (en)
 - French (fr)
+- Belgian French (fr-BE)
 - Spanish (es)
 - Italian (it)
 - German (de)
