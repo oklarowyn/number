@@ -1,13 +1,11 @@
 import { LanguageData } from "../types";
 
 export default {
-    ones: ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"],
-    teens: ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"],
-    tens: ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"],
-    thousands: ["", "mille"],
-    hundred: "cent",
-    million: "million",
-    billion: "milliard",
-    zero: "zéro",
-    minus: "moins",
-} as LanguageData
+    ones: ["", "один", "два", "три", "четыре", "пять", "шесть", "семь", "восемь", "девять"],
+    teens: ["десять", "одиннадцать", "двенадцать", "тринадцать", "четырнадцать", "пятнадцать", "шестнадцать", "семнадцать", "восемнадцать", "девятнадцать"],
+    tens: ["", "", "двадцать", "тридцать", "сорок", "пятьдесят", "шестьдесят", "семьдесят", "восемьдесят", "девяносто"],
+    thousands: ["", "тысяча", "миллион", "миллиард"],
+    hundred: "сто",
+    zero: "ноль",
+    minus: "минус",
+  } as LanguageData

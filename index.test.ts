@@ -1,122 +1,65 @@
-import { describe, it, expect, beforeAll } from '@jest/globals'
-import { locale, gender } from '.'
-import en from './locale/en'
-import fr from './locale/fr'
-import jp from './locale/jp'
+import { describe, expect, test } from '@jest/globals'
+import convertNumberToWords, { locale } from './index'
 
-describe('Gender Module', () => {
-  describe('locale()', () => {
-    it('should load french locale by default', async () => {
-      const genders = await locale()
-      expect(genders).toBeTruthy()
-      expect(genders).toEqual(fr)
-    })
-
-    it('should load japanese locale', async () => {
-      const genders = await locale('jp')
-      expect(genders).toBeTruthy()
-      expect(genders).toEqual(jp)
-    })
-
-    it('should handle invalid locale', async () => {
-      const genders = await locale('invalid' as any)
-      expect(genders).toEqual(en)
-    })
+describe('Number to words conversion', () => {
+  test('Basic numbers in English', () => {
+    expect(convertNumberToWords(0)).toBe('zero')
+    expect(convertNumberToWords(1)).toBe('one')
+    expect(convertNumberToWords(5)).toBe('five')
+    expect(convertNumberToWords(10)).toBe('ten')
   })
 
-  describe('gender()', () => {
-    beforeAll(async () => {
-      await locale('en')
-    })
+  test('Compound numbers in English', () => {
+    expect(convertNumberToWords(21)).toBe('twenty-one')
+    expect(convertNumberToWords(45)).toBe('forty-five')
+    expect(convertNumberToWords(99)).toBe('ninety-nine')
+  })
 
-    it('should return correct gender data', () => {
-      const result = gender('MALE')
-      expect(result).toBeTruthy()
-      expect(result).toHaveProperty('indirectPronoun')
-      expect(result).toHaveProperty('possessiveAdjective')
-    })
+  test('Large numbers in English', () => {
+    expect(convertNumberToWords(100)).toBe('one hundred')
+    expect(convertNumberToWords(101)).toBe('one hundred one')
+    expect(convertNumberToWords(999)).toBe('nine hundred ninety-nine')
+    expect(convertNumberToWords(1000)).toBe('one thousand')
+    expect(convertNumberToWords(1000000)).toBe('one million')
+  })
 
-    it('should capitalize gender data when requested', () => {
-      const result = gender('FEMALE', { capitalize: true })
-      expect(result.indirectPronoun[0]).toEqual(result.indirectPronoun[0].toUpperCase())
-      expect(result.possessiveAdjective[0]).toEqual(result.possessiveAdjective[0].toUpperCase())
-    })
+  test('Negative numbers in English', () => {
+    expect(convertNumberToWords(-1)).toBe('minus one')
+    expect(convertNumberToWords(-15)).toBe('minus fifteen')
+    expect(convertNumberToWords(-100)).toBe('minus one hundred')
+  })
 
-    it('should handle custom properties', () => {
-      const customProps = {
-        occupation: {
-          F: 'actress',
-          M: 'actor',
-          X: 'performer'
-        },
-        greeting: {
-          F: 'madame',
-          M: 'sir',
-          X: 'mx'
-        }
-      }
-      
-      const result = gender('FEMALE', { custom: customProps })
-      expect(result).toHaveProperty('occupation', 'actress')
-      expect(result).toHaveProperty('greeting', 'madame')
-    })
+  test('Capitalization options', () => {
+    expect(convertNumberToWords(42, { capitalize: true })).toBe('Forty-two')
+    expect(convertNumberToWords(100, { capitalize: true })).toBe('One hundred')
+  })
+})
 
-    it('should handle custom properties with capitalization', () => {
-      const customProps = {
-        occupation: {
-          F: 'actress',
-          M: 'actor',
-          X: 'performer'
-        }
-      }
-      
-      const result = gender('MALE', { 
-        custom: customProps,
-        capitalize: true 
-      })
-      expect(result).toHaveProperty('occupation', 'Actor')
-    })
+describe('Localization tests', () => {
+  test('Numbers in French', async () => {
+    await locale('fr')
+    expect(convertNumberToWords(1)).toBe('un')
+    expect(convertNumberToWords(21)).toBe('vingt-et-un')
+    expect(convertNumberToWords(42)).toBe('quarante-deux')
+    expect(convertNumberToWords(100)).toBe('cent')
+  })
 
-    it('should handle non-existent language', () => {
-      const result = gender('MALE', { language: 'invalid' as any })
-      expect(result).toBeTruthy()
-      expect(result).toHaveProperty('indirectPronoun')
-    })
+  test('Numbers in Spanish', async () => {
+    await locale('es')
+    expect(convertNumberToWords(1)).toBe('uno')
+    expect(convertNumberToWords(21)).toBe('veintiuno')
+    expect(convertNumberToWords(42)).toBe('cuarenta y dos')
+    expect(convertNumberToWords(100)).toBe('cien')
+  })
 
-    it('should handle multiple custom properties for each gender', () => {
-      const customProps = {
-        occupation: {
-          F: 'actress',
-          M: 'actor',
-          X: 'performer'
-        },
-        greeting: {
-          F: 'madame',
-          M: 'sir',
-          X: 'mx'
-        },
-        role: {
-          F: 'woman',
-          M: 'man',
-          X: 'person'
-        }
-      }
+  test('Language error handling', async () => {
+    await locale('invalid' as any)
+    expect(convertNumberToWords(42)).toBe('forty-two') // Fallback to default English
+  })
+})
 
-      const resultF = gender('FEMALE', { custom: customProps })
-      const resultM = gender('MALE', { custom: customProps })
-      const resultX = gender('NEUTRAL', { custom: customProps })
-
-      expect(resultF).toHaveProperty('occupation', 'actress')
-      expect(resultF).toHaveProperty('greeting', 'madame')
-      expect(resultF).toHaveProperty('role', 'woman')
-
-      expect(resultM).toHaveProperty('occupation', 'actor')
-      expect(resultM).toHaveProperty('greeting', 'sir')
-      expect(resultM).toHaveProperty('role', 'man')
-
-      expect(resultX).toHaveProperty('occupation', 'performer')
-      expect(resultX).toHaveProperty('greeting', 'mx')
-      expect(resultX).toHaveProperty('role', 'person')
-    })
+describe('Performance tests', () => {
+  test('Large number conversion', () => {
+    expect(convertNumberToWords(999999999)).toBe('nine hundred ninety-nine million nine hundred ninety-nine thousand nine hundred ninety-nine')
   })
 })

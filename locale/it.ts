@@ -4,10 +4,8 @@ export default {
     ones: ["", "uno", "due", "tre", "quattro", "cinque", "sei", "sette", "otto", "nove"],
     teens: ["dieci", "undici", "dodici", "tredici", "quattordici", "quindici", "sedici", "diciassette", "diciotto", "diciannove"],
     tens: ["", "", "venti", "trenta", "quaranta", "cinquanta", "sessanta", "settanta", "ottanta", "novanta"],
-    thousands: ["", "mille"],
+    thousands: ["", "mille", "milione", "miliardo"],
     hundred: "cento",
-    million: "milione",
-    billion: "miliardo",
     zero: "zero",
     minus: "meno",
   } as LanguageData

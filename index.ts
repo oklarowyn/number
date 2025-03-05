@@ -16,8 +16,8 @@ function toCapitalize(str: string): string {
 export async function locale(language: AvalaibleLanguage = 'fr', define = true): Promise<void> {
   try {
     if (Ls[language]) {
-      console.log(`[NUMBER] The language "${language}" is already loaded.`)
-      return Ls[language]
+      //console.log(`[NUMBER] The language "${language}" is already loaded.`)
+      if (define) L = language
     }
     let genders = await import(`./locale/${language}`)
     Ls[language] = genders.default
@@ -36,31 +36,55 @@ export function convertNumberToWords(num: number, options: {
   const data = Ls[language];
 
   if (!Ls[language]) {
-    console.warn(`[GENDER] The language "${language}" has not been loaded.`)
+    console.warn(`[NUMBER] The language "${language}" has not been loaded.`)
     language = L
   }
+
 
   if (num === 0) return data.zero;
   if (num < 0) return `${data.minus} ${convertNumberToWords(Math.abs(num), {language})}`;
 
   let words = "";
 
-  const units = [data.billion, data.million, ...data.thousands];
+  function convertNumberToWordsBelowThousand(num: number): string {
+    let words = "";
 
-  for (let i = 0; i < units.length; i++) {
-    const power = Math.pow(1000, units.length - i - 1);
+    if (num >= 100) {
+      const hundreds = Math.floor(num / 100);
+      words += hundreds > 1 ? `${data.ones[hundreds]} ${data.hundred} ` : `${data.hundred} `;
+      num %= 100;
+    }
+
+    if (num >= 20) {
+      const ten = Math.floor(num / 10);
+      words += data.tens[ten] + (num % 10 > 0 ? `-${data.ones[num % 10]}` : "");
+    } else if (num >= 10) {
+      words += data.teens[num - 10];
+    } else if (num > 0) {
+      words += data.ones[num];
+    }
+
+    return words.trim();
+  }
+
+  for (let i = 0; i < data.thousands.length; i++) {
+    const power = Math.pow(1000, data.thousands.length - i - 1);
     if (num >= power) {
       const currentNum = Math.floor(num / power);
       if (currentNum > 0) {
-        words += `${convertNumberToWords(currentNum, {language})} ${units[units.length - i - 1]} `;
+        words += `${convertNumberToWordsBelowThousand(currentNum)} ${data.thousands[data.thousands.length - i - 1]} `;
         num %= power;
       }
     }
   }
 
+  words += convertNumberToWordsBelowThousand(num);
+
+
   let result =  words.trim() !== "" ? words.trim() : String(num);
   if (capitalize) result = toCapitalize(result)
   return result
 }
+
 
 export default convertNumberToWords
