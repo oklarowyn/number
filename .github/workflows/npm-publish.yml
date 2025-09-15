@@ -53,6 +53,7 @@ jobs:
         with:
           name: build-artifacts
           path: ./dist
+      - run : cp -r locale ./dist
       - run: cd dist && npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
