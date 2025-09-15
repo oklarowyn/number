@@ -1,9 +1,8 @@
 import { AvalaibleLanguage, LanguageData } from './types';
 
-
 export * as Types from './types'
 
-import en from './locale/en'
+import en from './locale/en.json'
 export let L = <AvalaibleLanguage> 'en' 
 export const Ls = {}
 Ls[L] = en
@@ -19,8 +18,9 @@ export async function locale(language: AvalaibleLanguage = 'fr', define = true):
       //console.log(`[NUMBER] The language "${language}" is already loaded.`)
       if (define) L = language
     }
-    let genders = await import(`./locale/${language}`)
-    Ls[language] = genders.default
+    const response = await fetch(`./locale/${language}.json`);
+    const nembers = await response.json() as LanguageData;
+    Ls[language] = nembers
     if (define) L = language
   } catch (error) {
     console.warn(`[NUMBER] The language "${language}" is not supported or have enconter an error.`)
