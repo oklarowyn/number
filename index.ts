@@ -1,4 +1,6 @@
 import { AvalaibleLanguage, LanguageData } from './types';
+import { readFile } from 'fs/promises';
+import path from 'path';
 
 export * as Types from './types'
 
@@ -17,9 +19,11 @@ export async function locale(language: AvalaibleLanguage = 'fr', define = true):
     if (Ls[language]) {
       //console.log(`[NUMBER] The language "${language}" is already loaded.`)
       if (define) L = language
+      return; // Retourne si la langue est déjà chargée
     }
-    const response = await fetch(`./locale/${language}.json`);
-    const nembers = await response.json() as LanguageData;
+    const filePath = path.join(__dirname, 'locale', `${language}.json`);
+    const fileContent = await readFile(filePath, 'utf-8');
+    const nembers = JSON.parse(fileContent) as LanguageData;
     Ls[language] = nembers
     if (define) L = language
   } catch (error) {
