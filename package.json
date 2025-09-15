@@ -1,10 +1,10 @@
 {
   "name": "@matsukky/number",
   "version": "0.2.0",
-  "author": "Maylody",
+  "author": "Oklarowyn",
   "repository": {
     "type": "git",
-    "url": "https://github.com/matsukky/number.git"
+    "url": "https://github.com/oklarowyn/number.git"
   },
   "main": "index.js",
   "description": "Easy return number in a string, in multiple languages",
