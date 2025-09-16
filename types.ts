@@ -4,9 +4,14 @@ export type LanguageData = {
   teens: string[];
   tens: string[];
   thousands: string[];
+  thousandsPlural?: string[];
   hundred: string;
   zero: string;
   minus: string;
+  omitOneForThousand?: boolean; 
+  pluralizeThousands?: boolean; 
+  thousandStep?: number; 
+  genderedOne?: { masculine: string; feminine: string }; 
 };
 
 export const availableLanguages = [

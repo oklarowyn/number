@@ -19,6 +19,7 @@ export async function locale(
   try {
     if (typeof locale === 'string') {
       if (Ls[locale]) {
+
         L = locale
         return
       }
@@ -58,49 +59,99 @@ export function LoadedLanguages() {
   return Object.keys(Ls);
 }
 
-export function convertNumberToWords(num: number, options: {
+export function convertNumberToWords(
+  num: number,
+  options: {
     capitalize?: boolean;
-    language?: AvalaibleLanguage 
-  } = {}): string {
-  let { capitalize = false, language = L} = options;
+    language?: string;
+    gender?: "masculine" | "feminine"; // pour gérer un/une si activé
+  } = {}
+): string {
+  let { capitalize = false, language = L, gender = "masculine" } = options;
   if (!Ls[language]) {
-    console.warn(`[NUMBER] The language "${language}" has not been loaded.`)
-    language = L
+    console.warn(`[NUMBER] The language "${language}" has not been loaded.`);
+    language = L;
   }
   const data = Ls[language];
+  const step = data.thousandStep ?? 1000;
+  const pluralize = data.pluralizeThousands ?? false;
 
   if (num === 0) return data.zero;
-  if (num < 0) return `${data.minus} ${convertNumberToWords(Math.abs(num), {language})}`;
+  if (num < 0)
+    return `${data.minus} ${convertNumberToWords(Math.abs(num), {
+      language,
+      gender,
+    })}`;
 
-  let words = "";
-
-  function convertNumberToWordsBelowThousand(num: number): string {
+  function convertNumberToWordsBelowThousand(n: number): string {
     let words = "";
 
-    if (num >= 100) {
-      const hundreds = Math.floor(num / 100);
-      words += hundreds > 1 ? `${data.ones[hundreds]} ${data.hundred} ` : `${data.hundred} `;
-      num %= 100;
+    if (n >= 100) {
+      const hundreds = Math.floor(n / 100);
+      if (hundreds > 0) {
+        // Accord de "cent" si nécessaire
+        if (language === "fr") {
+          if (hundreds > 1) {
+            words += `${data.ones[hundreds]} ${data.hundred}`;
+            if (n % 100 === 0) words += "s"; // deux cents
+          } else {
+            words += `${data.hundred}${n % 100 === 0 ? "s" : ""}`;
+          }
+        } else {
+          words +=
+            hundreds > 1
+              ? `${data.ones[hundreds]} ${data.hundred}`
+              : `${data.hundred}`;
+        }
+        words += " ";
+      }
+      n %= 100;
     }
 
-    if (num >= 20) {
-      const ten = Math.floor(num / 10);
-      words += data.tens[ten] + (num % 10 > 0 ? `-${data.ones[num % 10]}` : "");
-    } else if (num >= 10) {
-      words += data.teens[num - 10];
-    } else if (num > 0) {
-      words += data.ones[num];
+    if (n >= 20) {
+      const ten = Math.floor(n / 10);
+      if (language === "fr" && ten === 8 && n % 10 === 0) {
+        words += data.tens[ten] + "s"; // quatre-vingts
+      } else {
+        words += data.tens[ten];
+      }
+      if (n % 10 > 0) words += `-${data.ones[n % 10]}`;
+    } else if (n >= 10) {
+      words += data.teens[n - 10];
+    } else if (n > 0) {
+      if (n === 1 && data.genderedOne) {
+        words += data.genderedOne[gender] ?? data.genderedOne.masculine;
+      } else {
+        words += data.ones[n];
+      }
     }
 
     return words.trim();
   }
 
+  let words = "";
   for (let i = 0; i < data.thousands.length; i++) {
-    const power = Math.pow(1000, data.thousands.length - i - 1);
+    const power = Math.pow(step, data.thousands.length - i - 1);
     if (num >= power) {
       const currentNum = Math.floor(num / power);
       if (currentNum > 0) {
-        words += `${convertNumberToWordsBelowThousand(currentNum)} ${data.thousands[data.thousands.length - i - 1]} `;
+        const isPlural = currentNum > 1 && pluralize;
+        const thousandWord =
+          isPlural && data.thousandsPlural
+            ? data.thousandsPlural[data.thousands.length - i - 1]
+            : data.thousands[data.thousands.length - i - 1];
+
+        if (
+          data.omitOneForThousand &&
+          thousandWord === data.thousands[1] &&
+          currentNum === 1
+        ) {
+          words += `${thousandWord} `;
+        } else {
+          words += `${convertNumberToWordsBelowThousand(
+            currentNum
+          )} ${thousandWord} `;
+        }
         num %= power;
       }
     }
@@ -108,10 +159,9 @@ export function convertNumberToWords(num: number, options: {
 
   words += convertNumberToWordsBelowThousand(num);
 
-
-  let result =  words.trim() !== "" ? words.trim() : String(num);
-  if (capitalize) result = toCapitalize(result)
-  return result
+  let result = words.trim() !== "" ? words.trim() : String(num);
+  if (capitalize) result = result.charAt(0).toUpperCase() + result.slice(1);
+  return result;
 }
 
 
