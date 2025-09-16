@@ -1,12 +1,10 @@
 import { AvalaibleLanguage, LanguageData } from './types';
-import { readFile } from 'fs/promises';
-import path from 'path';
 
 export * as Types from './types'
 
-import en from './locale/en.json'
-export let L = <AvalaibleLanguage> 'en' 
-export const Ls = {}
+import en from './locale/en'
+let L: AvalaibleLanguage = 'en'
+const Ls: Record<string, LanguageData> = {};
 Ls[L] = en
 
 
@@ -14,36 +12,62 @@ function toCapitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export async function locale(language: AvalaibleLanguage = 'fr', define = true): Promise<void> {
+export async function locale(
+  locale: LanguageData | AvalaibleLanguage = 'fr',
+  dynamicImport = true,
+): Promise<void> {
   try {
-    if (Ls[language]) {
-      //console.log(`[NUMBER] The language "${language}" is already loaded.`)
-      if (define) L = language
-      return; // Retourne si la langue est déjà chargée
+    if (typeof locale === 'string') {
+      if (Ls[locale]) {
+        L = locale
+        return
+      }
+
+      if (dynamicImport) {
+        //console.log(`[NUMBER] Try to load "${locale}" dynamicly.`)
+        await import(`./locale/${locale}`).then((lang) => { 
+          L = locale
+          Ls[locale] = lang.default
+        })
+        .catch(()=> console.error(`[NUMBER] The language "${locale}" does not exist.`))
+        return
+      }
+
+      console.error(`[NUMBER] The language "${locale}" isn't loaded.`)
+      return
     }
-    const filePath = path.join(__dirname, 'locale', `${language}.json`);
-    const fileContent = await readFile(filePath, 'utf-8');
-    const nembers = JSON.parse(fileContent) as LanguageData;
-    Ls[language] = nembers
-    if (define) L = language
-  } catch (error) {
-    console.warn(`[NUMBER] The language "${language}" is not supported or have enconter an error.`)
+
+    if (typeof locale === 'object') {
+      if (Ls[locale.code]) {
+        console.warn(`[NUMBER] The language "${locale.code}" is already loaded.`)
+        return
+      }
+      if(dynamicImport) L = locale.code
+      Ls[locale.code] = locale
+      return
+    }
+
+    console.error(`[NUMBER] You tried to import something not supported.`)
+  } catch {
+    console.error(`[NUMBER] The language is not supported or encountered an error.`)
+    
   }
+}
+
+export function LoadedLanguages() {
+  return Object.keys(Ls);
 }
 
 export function convertNumberToWords(num: number, options: {
     capitalize?: boolean;
     language?: AvalaibleLanguage 
   } = {}): string {
-
-  let { capitalize = false, language = L} = options;;
-  const data = Ls[language];
-
+  let { capitalize = false, language = L} = options;
   if (!Ls[language]) {
     console.warn(`[NUMBER] The language "${language}" has not been loaded.`)
     language = L
   }
-
+  const data = Ls[language];
 
   if (num === 0) return data.zero;
   if (num < 0) return `${data.minus} ${convertNumberToWords(Math.abs(num), {language})}`;
