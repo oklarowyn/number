@@ -11,7 +11,6 @@
       "allowJs": true
     },
     "exclude": [
-      "./locale",
       "./index.test.ts",
       "./jest.config.js"
     ]
