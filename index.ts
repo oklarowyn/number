@@ -64,7 +64,7 @@ export function convertNumberToWords(
   options: {
     capitalize?: boolean;
     language?: string;
-    gender?: "masculine" | "feminine"; // pour gérer un/une si activé
+    gender?: "masculine" | "feminine"; // gère un/une si activé
   } = {}
 ): string {
   let { capitalize = false, language = L, gender = "masculine" } = options;
@@ -75,6 +75,7 @@ export function convertNumberToWords(
   const data = Ls[language];
   const step = data.thousandStep ?? 1000;
   const pluralize = data.pluralizeThousands ?? false;
+  const isGerman = language.startsWith("de");
 
   if (num === 0) return data.zero;
   if (num < 0)
@@ -83,14 +84,15 @@ export function convertNumberToWords(
       gender,
     })}`;
 
-  function convertNumberToWordsBelowThousand(n: number): string {
+  function convertNumberToWordsBelowThousand(n: number, isLastChunk = false): string {
     let words = "";
 
     if (n >= 100) {
       const hundreds = Math.floor(n / 100);
       if (hundreds > 0) {
-        // Accord de "cent" si nécessaire
-        if (language === "fr") {
+        if (isGerman) {
+          words += (hundreds === 1 ? "ein" : data.ones[hundreds]) + data.hundred;
+        } else if (language.includes("fr")) {
           if (hundreds > 1) {
             words += `${data.ones[hundreds]} ${data.hundred}`;
             if (n % 100 === 0) words += "s"; // deux cents
@@ -98,29 +100,35 @@ export function convertNumberToWords(
             words += `${data.hundred}${n % 100 === 0 ? "s" : ""}`;
           }
         } else {
-          words +=
-            hundreds > 1
-              ? `${data.ones[hundreds]} ${data.hundred}`
-              : `${data.hundred}`;
+          words += hundreds > 1 ? `${data.ones[hundreds]} ${data.hundred}` : data.hundred;
         }
-        words += " ";
+        if (!isGerman) words += " ";
       }
       n %= 100;
     }
 
     if (n >= 20) {
       const ten = Math.floor(n / 10);
-      if (language === "fr" && ten === 8 && n % 10 === 0) {
+      const unit = n % 10;
+      if (isGerman) {
+        // inversion: einundzwanzig
+        if (unit > 0) {
+          words += (unit === 1 && isLastChunk ? "eins" : data.ones[unit]) + "und" + data.tens[ten];
+        } else {
+          words += data.tens[ten];
+        }
+      } else if (language.includes("fr") && ten === 8 && unit === 0) {
         words += data.tens[ten] + "s"; // quatre-vingts
       } else {
-        words += data.tens[ten];
+        words += data.tens[ten] + (unit > 0 ? `-${data.ones[unit]}` : "");
       }
-      if (n % 10 > 0) words += `-${data.ones[n % 10]}`;
     } else if (n >= 10) {
       words += data.teens[n - 10];
     } else if (n > 0) {
       if (n === 1 && data.genderedOne) {
         words += data.genderedOne[gender] ?? data.genderedOne.masculine;
+      } else if (isGerman && n === 1 && !isLastChunk) {
+        words += "ein";
       } else {
         words += data.ones[n];
       }
@@ -141,28 +149,37 @@ export function convertNumberToWords(
             ? data.thousandsPlural[data.thousands.length - i - 1]
             : data.thousands[data.thousands.length - i - 1];
 
-        if (
-          data.omitOneForThousand &&
+        const chunkWords = convertNumberToWordsBelowThousand(
+          currentNum,
+          i === data.thousands.length - 1
+        );
+
+        if (data.omitOneForThousand &&
           thousandWord === data.thousands[1] &&
-          currentNum === 1
-        ) {
-          words += `${thousandWord} `;
+          currentNum === 1) {
+          // Ex: "mille" (pas "un mille")
+          words += isGerman ? `${thousandWord}` : `${thousandWord} `;
         } else {
-          words += `${convertNumberToWordsBelowThousand(
-            currentNum
-          )} ${thousandWord} `;
+          if (isGerman && thousandWord !== "") {
+            // concaténation en allemand
+            words += `${chunkWords}${thousandWord}`;
+          } else {
+            words += `${chunkWords} ${thousandWord} `;
+          }
         }
         num %= power;
       }
     }
   }
 
-  words += convertNumberToWordsBelowThousand(num);
+  const lastChunk = convertNumberToWordsBelowThousand(num, true);
+  words += isGerman ? lastChunk : lastChunk;
 
   let result = words.trim() !== "" ? words.trim() : String(num);
   if (capitalize) result = result.charAt(0).toUpperCase() + result.slice(1);
   return result;
 }
+
 
 
 export default convertNumberToWords
