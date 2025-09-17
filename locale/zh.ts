@@ -6,12 +6,14 @@ const locale = {
     ones: ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"],
     teens: ["十","十一","十二","十三","十四","十五","十六","十七","十八","十九"],
     tens: ["", "", "二十","三十","四十","五十","六十","七十","八十","九十"],
-    thousands: ["", "万", "亿", "兆"], // base 10k
+    thousands: ["", "万", "亿", "兆"],
+    thousand: "千",
     hundred: "百",
     zero: "零",
     minus: "负",
     omitOneForThousand: false,
     pluralizeThousands: false,
+    tensConnector: "",
     thousandStep: 10000
   } as LanguageData
   

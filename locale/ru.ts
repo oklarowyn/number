@@ -9,12 +9,14 @@ const locale = {
   thousands: ["", "тысяча", "миллион", "миллиард"],
   thousandsPlural: ["", "тысяч", "миллионов", "миллиардов"],
   hundred: "сто",
+  hundreds: ["", "сто", "двести", "триста", "четыреста", "пятьсот", "шестьсот", "семьсот", "восемьсот", "девятьсот"],
   zero: "ноль",
   minus: "минус",
-  omitOneForThousand: true, // souvent on dit juste "тысяча"
+  omitOneForThousand: true, 
   pluralizeThousands: true,
   thousandStep: 1000,
-  genderedOne: { masculine: "один", feminine: "одна" } // pour "одна тысяча"
+  tensConnector: " ",  
+  genderedOne: { masculine: "один", feminine: "одна" }
 } as LanguageData
   
 export default locale

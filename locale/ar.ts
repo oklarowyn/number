@@ -9,11 +9,13 @@ const locale = {
   thousands: ["", "ألف", "مليون", "مليار"],
   thousandsPlural: ["", "آلاف", "ملايين", "مليارات"],
   hundred: "مئة",
+  hundreds: ["", "مئة", "مئتان", "ثلاثمئة", "أربعمئة", "خمسمئة", "ستمئة", "سبعمئة", "ثمانمئة", "تسعمئة"],
   zero: "صفر",
   minus: "سالب",
   omitOneForThousand: true, // pas de واحد devant ألف
   pluralizeThousands: true,
   thousandStep: 1000,
+  tensConnector: " و",  
   genderedOne: { masculine: "واحد", feminine: "واحدة" }
 } as LanguageData
 

@@ -14,6 +14,7 @@ const locale = {
   omitOneForThousand: true,
   pluralizeThousands: true,
   thousandStep: 1000,
+  tensConnector: "-",
   genderedOne: { masculine: "un", feminine: "une" }
 } as LanguageData
 

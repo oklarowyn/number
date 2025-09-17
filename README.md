@@ -16,7 +16,6 @@ A minimalist library that converts numbers to their word representation in vario
 - [Usage](#usage)
   - [Basic Usage](#basic-usage)
   - [Localization](#localization)
-  - [Capitalization](#capitalization)
 
 ## Installation
 
@@ -92,15 +91,6 @@ locale(CustomLang, true)
 
 console.log(convertNumberToWords(42));    // "quarzo-dyo"
 console.log(convertNumberToWords(100));   // "hundo"
-```
-
-### Capitalization
-
-```typescript
-import convertNumberToWords from '@matsukky/number';
-
-console.log(convertNumberToWords(42, { capitalize: true }));    // "Forty-two"
-console.log(convertNumberToWords(100, { capitalize: true }));   // "One hundred"
 ```
 
 ## API Reference

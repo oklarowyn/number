@@ -8,10 +8,6 @@ const Ls: Record<string, LanguageData> = {};
 Ls[L] = en
 
 
-function toCapitalize(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
 export async function locale(
   locale: LanguageData | AvalaibleLanguage = 'fr',
   dynamicImport = true,
@@ -64,7 +60,7 @@ export function convertNumberToWords(
   options: {
     capitalize?: boolean;
     language?: string;
-    gender?: "masculine" | "feminine"; // gère un/une si activé
+    gender?: "masculine" | "feminine";
   } = {}
 ): string {
   let { capitalize = false, language = L, gender = "masculine" } = options;
@@ -73,113 +69,144 @@ export function convertNumberToWords(
     language = L;
   }
   const data = Ls[language];
-  const step = data.thousandStep ?? 1000;
+
+  const step = data.thousandStep ?? (language.startsWith("zh") || language.startsWith("jp") ? 10000 : 1000);
   const pluralize = data.pluralizeThousands ?? false;
+
   const isGerman = language.startsWith("de");
+  const isFrench = language.startsWith("fr");
+  const isES = language.startsWith("es");
+  const isIT = language.startsWith("it");
+  const isRU = language.startsWith("ru");
+  const isAR = language.startsWith("ar");
+  const isZH = language.startsWith("zh");
+  const isJP = language.startsWith("jp");
 
   if (num === 0) return data.zero;
-  if (num < 0)
-    return `${data.minus} ${convertNumberToWords(Math.abs(num), {
-      language,
-      gender,
-    })}`;
+  if (num < 0) return `${data.minus} ${convertNumberToWords(Math.abs(num), { language, gender })}`;
 
+  // --- Version asiatique (ZH / JP) ---
+  function convertAsianBelow10000(n: number): string {
+    if (n === 0) return "";
+    const units = ["", data.teens[1], data.hundred, data.thousand];
+    let result = "";
+    const digits = n.toString().split("").map(Number);
+
+    for (let i = 0; i < digits.length; i++) {
+      const d = digits[digits.length - 1 - i];
+      if (d === 0) {
+        if (!result.startsWith(data.zero)) result = data.zero + result;
+      } else {
+        result = data.ones[d] + units[i] + result;
+      }
+    }
+    return result.replace(/零+/g, data.zero).replace(new RegExp(`${data.zero}$`), "");
+  }
+
+  // --- Version occidentale (<1000) ---
   function convertNumberToWordsBelowThousand(n: number, isLastChunk = false): string {
     let words = "";
 
+    // Centaines
     if (n >= 100) {
       const hundreds = Math.floor(n / 100);
       if (hundreds > 0) {
         if (isGerman) {
           words += (hundreds === 1 ? "ein" : data.ones[hundreds]) + data.hundred;
-        } else if (language.includes("fr")) {
+        } else if (isFrench) {
           if (hundreds > 1) {
             words += `${data.ones[hundreds]} ${data.hundred}`;
-            if (n % 100 === 0) words += "s"; // deux cents
-          } else {
-            words += `${data.hundred}${n % 100 === 0 ? "s" : ""}`;
-          }
+            if (n % 100 === 0) words += "s";
+          } else words += data.hundred;
+        } else if (isES || isIT || isRU || isAR) {
+          words += data.hundreds[hundreds];
         } else {
           words += hundreds > 1 ? `${data.ones[hundreds]} ${data.hundred}` : data.hundred;
         }
-        if (!isGerman) words += " ";
+        words += " ";
       }
       n %= 100;
     }
 
+    // Dizaines + unités
     if (n >= 20) {
       const ten = Math.floor(n / 10);
       const unit = n % 10;
       if (isGerman) {
-        // inversion: einundzwanzig
-        if (unit > 0) {
-          words += (unit === 1 && isLastChunk ? "eins" : data.ones[unit]) + "und" + data.tens[ten];
-        } else {
-          words += data.tens[ten];
-        }
-      } else if (language.includes("fr") && ten === 8 && unit === 0) {
-        words += data.tens[ten] + "s"; // quatre-vingts
+        words += unit > 0 ? (unit === 1 && isLastChunk ? "eins" : data.ones[unit]) + "und" + data.tens[ten] : data.tens[ten];
+      } else if (isFrench) {
+        words += ten === 8 && unit === 0 ? "quatre-vingts" : data.tens[ten] + (unit > 0 ? `-${data.ones[unit]}` : "");
+      } else if (isES || isIT || isRU || isAR) {
+        words += data.tens[ten];
+        if (unit > 0) words += data.tensConnector ? data.tensConnector + data.ones[unit] : " " + data.ones[unit];
       } else {
         words += data.tens[ten] + (unit > 0 ? `-${data.ones[unit]}` : "");
       }
     } else if (n >= 10) {
       words += data.teens[n - 10];
     } else if (n > 0) {
-      if (n === 1 && data.genderedOne) {
-        words += data.genderedOne[gender] ?? data.genderedOne.masculine;
-      } else if (isGerman && n === 1 && !isLastChunk) {
-        words += "ein";
-      } else {
-        words += data.ones[n];
-      }
+      if (n === 1 && data.genderedOne) words += data.genderedOne[gender] ?? data.genderedOne.masculine;
+      else if (isGerman && n === 1 && !isLastChunk) words += "ein";
+      else words += data.ones[n];
     }
 
     return words.trim();
   }
 
   let words = "";
-  for (let i = 0; i < data.thousands.length; i++) {
-    const power = Math.pow(step, data.thousands.length - i - 1);
-    if (num >= power) {
-      const currentNum = Math.floor(num / power);
-      if (currentNum > 0) {
-        const isPlural = currentNum > 1 && pluralize;
-        const thousandWord =
-          isPlural && data.thousandsPlural
-            ? data.thousandsPlural[data.thousands.length - i - 1]
-            : data.thousands[data.thousands.length - i - 1];
+  let chunks: string[] = [];
+  let remaining = num;
 
-        const chunkWords = convertNumberToWordsBelowThousand(
-          currentNum,
-          i === data.thousands.length - 1
-        );
+  if (isZH || isJP) {
+    // Découpage en blocs de 10000
+    const units = data.thousands; // ex: ["", "万", "亿", "兆"]
+    let chunkIndex = 0;
+    while (remaining > 0) {
+      const part = remaining % 10000;
+      if (part > 0) {
+        chunks.unshift(convertAsianBelow10000(part) + units[chunkIndex]);
+      }
+      remaining = Math.floor(remaining / 10000);
+      chunkIndex++;
+    }
+    words = chunks.join("").replace(/零+/g, data.zero).replace(new RegExp(`${data.zero}$`), "");
+  } else {
+    // Occidentaux
+    const thousandsLength = data.thousands.length;
+    for (let i = 0; i < thousandsLength; i++) {
+      const power = Math.pow(step, thousandsLength - i - 1);
+      if (remaining >= power) {
+        const currentNum = Math.floor(remaining / power);
+        if (currentNum > 0) {
+          const isPlural = currentNum > 1 && pluralize;
+          const thousandWord =
+            isPlural && data.thousandsPlural
+              ? data.thousandsPlural[thousandsLength - i - 1]
+              : data.thousands[thousandsLength - i - 1];
 
-        if (data.omitOneForThousand &&
-          thousandWord === data.thousands[1] &&
-          currentNum === 1) {
-          // Ex: "mille" (pas "un mille")
-          words += isGerman ? `${thousandWord}` : `${thousandWord} `;
-        } else {
-          if (isGerman && thousandWord !== "") {
-            // concaténation en allemand
-            words += `${chunkWords}${thousandWord}`;
+          const chunkWords = convertNumberToWordsBelowThousand(currentNum, i === thousandsLength - 1);
+
+          if (isGerman) {
+            chunks.push(`${chunkWords}${thousandWord}`);
           } else {
-            words += `${chunkWords} ${thousandWord} `;
+            chunks.push(`${chunkWords} ${thousandWord}`);
           }
+
+          remaining %= power;
         }
-        num %= power;
       }
     }
+
+    if (remaining > 0 || chunks.length === 0) {
+      chunks.push(convertNumberToWordsBelowThousand(remaining, true));
+    }
+
+    words = chunks.join(" ").trim();
   }
 
-  const lastChunk = convertNumberToWordsBelowThousand(num, true);
-  words += isGerman ? lastChunk : lastChunk;
-
-  let result = words.trim() !== "" ? words.trim() : String(num);
-  if (capitalize) result = result.charAt(0).toUpperCase() + result.slice(1);
-  return result;
+  if (capitalize) words = words.charAt(0).toUpperCase() + words.slice(1);
+  return words;
 }
-
 
 
 export default convertNumberToWords

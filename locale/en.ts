@@ -12,5 +12,6 @@ export default {
     minus: "minus",
     omitOneForThousand: false,
     pluralizeThousands: false,
+    tensConnector: "-", 
     thousandStep: 1000
   } as LanguageData

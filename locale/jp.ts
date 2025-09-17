@@ -9,9 +9,11 @@ const locale = {
     thousands: ["", "万", "億", "兆"], 
     hundred: "百",
     zero: "零",
+    thousand: "千",
     minus: "マイナス",
     omitOneForThousand: false,
     pluralizeThousands: false,
+    tensConnector: "", 
     thousandStep: 10000
   } as LanguageData
   

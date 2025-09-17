@@ -9,11 +9,13 @@ const locale = {
     thousands: ["", "mille", "milione", "miliardo"],
     thousandsPlural: ["", "mila", "milioni", "miliardi"],
     hundred: "cento",
+    hundreds: ["", "cento", "duecento", "trecento", "quattrocento", "cinquecento", "seicento", "settecento", "ottocento", "novecento"],
     zero: "zero",
     minus: "meno",
     omitOneForThousand: true,
     pluralizeThousands: true,
     thousandStep: 1000,
+    tensConnector: "-", 
     genderedOne: { masculine: "uno", feminine: "una" }
   } as LanguageData
   

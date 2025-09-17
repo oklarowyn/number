@@ -13,6 +13,7 @@ const locale = {
     minus: "minus",
     omitOneForThousand: false,
     pluralizeThousands: true,
+    tensConnector: "-", 
     thousandStep: 1000
   } as LanguageData
 

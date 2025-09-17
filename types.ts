@@ -6,8 +6,11 @@ export type LanguageData = {
   thousands: string[];
   thousandsPlural?: string[];
   hundred: string;
+  hundreds?: string[];
+  thousand?: string;
   zero: string;
   minus: string;
+  tensConnector?: string; 
   omitOneForThousand?: boolean; 
   pluralizeThousands?: boolean; 
   thousandStep?: number; 
