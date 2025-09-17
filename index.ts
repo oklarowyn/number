@@ -154,13 +154,14 @@ export function convertNumberToWords(
   }
 
   let words = "";
-  let chunks: string[] = [];
   let remaining = num;
 
   if (isZH || isJP) {
     // Découpage en blocs de 10000
-    const units = data.thousands; // ex: ["", "万", "亿", "兆"]
+    const units = data.thousands;
     let chunkIndex = 0;
+    const chunks: string[] = [];
+
     while (remaining > 0) {
       const part = remaining % 10000;
       if (part > 0) {
@@ -172,24 +173,31 @@ export function convertNumberToWords(
     words = chunks.join("").replace(/零+/g, data.zero).replace(new RegExp(`${data.zero}$`), "");
   } else {
     // Occidentaux
+    const chunks: string[] = [];
     const thousandsLength = data.thousands.length;
+
     for (let i = 0; i < thousandsLength; i++) {
       const power = Math.pow(step, thousandsLength - i - 1);
       if (remaining >= power) {
         const currentNum = Math.floor(remaining / power);
         if (currentNum > 0) {
+          let chunkWords = convertNumberToWordsBelowThousand(currentNum, i === thousandsLength - 1);
+
           const isPlural = currentNum > 1 && pluralize;
           const thousandWord =
             isPlural && data.thousandsPlural
               ? data.thousandsPlural[thousandsLength - i - 1]
               : data.thousands[thousandsLength - i - 1];
 
-          const chunkWords = convertNumberToWordsBelowThousand(currentNum, i === thousandsLength - 1);
+          // --- OMIT ONE FOR THOUSAND ---
+          if (data.omitOneForThousand && thousandWord === data.thousands[1] && currentNum === 1) {
+            chunkWords = "";
+          }
 
           if (isGerman) {
             chunks.push(`${chunkWords}${thousandWord}`);
           } else {
-            chunks.push(`${chunkWords} ${thousandWord}`);
+            chunks.push(`${chunkWords} ${thousandWord}`.trim());
           }
 
           remaining %= power;
@@ -197,16 +205,16 @@ export function convertNumberToWords(
       }
     }
 
+    // Ajout du reste < 1000
     if (remaining > 0 || chunks.length === 0) {
       chunks.push(convertNumberToWordsBelowThousand(remaining, true));
     }
 
-    words = chunks.join(" ").trim();
+    words = chunks.filter(Boolean).join(" ").trim();
   }
 
   if (capitalize) words = words.charAt(0).toUpperCase() + words.slice(1);
   return words;
 }
-
 
 export default convertNumberToWords
